@@ -1,30 +1,83 @@
-import React from 'react';
-import { PlayIcon } from "@heroicons/react/24/solid";
+import React, { useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  selectCartItems,
+  selectCartState,
+  selectTotalAmount,
+  selectTotalQTY,
+  setClearCartItems,
+  setCloseCart,
+  setGetTotals
+} from "../app/CartSlice.js";
+import CartCount from "./cart/CartCount";
+import CartEmpty from "./cart/CartEmpty";
+import CartItem from "./cart/CartItem";
 
-const Clips = ({ clip, imgsrc }) => {
+const Cart = () => {
+  const dispatch = useDispatch();
+  const ifCartState = useSelector(selectCartState);
+  const cartItems = useSelector(selectCartItems);
+  const totalAmount = useSelector(selectTotalAmount);
+  const totalQTY = useSelector(selectTotalQTY);
+  
+  // console.log(cartItems)
+
+  useEffect(() => {
+    dispatch(setGetTotals())
+  },[cartItems, dispatch])
+  
+  const onCartToggle = () => {
+    dispatch(
+      setCloseCart({
+        cartState: false,
+      })
+    );
+  };
+
+  const onClearCartItems = () => {
+    dispatch(setClearCartItems())
+  }
+  
   return (
-   <>
-      <div className='relative h-28 w-32 rounded-xl overflow-hidden group cursor-pointer transition-all duration-300 lg:w-28 md:w-24 sm:w-16 lg:h-24 md:h-20 sm:h-14'>
-        <img
-            src={imgsrc}
-            alt="img/clips"
-            className='inset-0 flex h-full w-full object-cover absolute top-0 left-0 right-0 rounded-xl opacity-100 z-10 transition-opacity duration-500'
-        />
-        <div className='bg-white/75 blur-effect-theme absolute top-11 left-11 lg:top-8 lg:left-9 sm:top-4 sm:left-5 right-0 opacity-100 z-[100] w-8 h-8 md:w-5 md:h-5 flex items-center justify-center rounded-full'>
-            <PlayIcon className='icon-style md:w-3 md:h-3 text-slate-900' />
-        </div>
-        <video
-            autoPlay={true}
-            loop={true}
-            muted={true}
-            playsInline={true}
-            className="absolute top-0 left-0 right-0 flex h-full w-full object-cover opacity-0 z-0 group-hover:opacity-100 group-hover:z-50 rounded-xl"
+    <>
+      <div
+        className={`fixed top-0 left-0 right-0 bottom-0 blur-effect-theme duration-500 w-full h-screen opacity-100 z-[250] ${
+          ifCartState
+            ? "opacity-100 visible translate-x-0"
+            : "opacity-0 invisible translate-x-8"
+        }`}
+      >
+        <div
+          className={`blur-effect-theme duration-500 h-screen max-w-xl w-full absolute right-0 ${
+            ifCartState
+              ? "opacity-100 visible translate-x-0"
+              : "opacity-0 invisible translate-x-8"
+          }`}
         >
-            <source type='video/mp4' src={clip} />
-        </video>
-      </div>
-   </>
-  )
-}
+          <CartCount totalQTY={totalQTY} onCartToggle={onCartToggle} onClearCartItems={onClearCartItems} />
+          {cartItems?.length === 0 ? <CartEmpty onCartToggle={onCartToggle} /> : <div>
+            <div className="flex items-start justify-start flex-col gap-y-7 lg:gap-y-5 overflow-y-scroll h-[81vh] scroll-smooth scroll-hidden py-3">
+              {cartItems?.map((item, i) => (
+                <CartItem key={i} item={item} />
+              ))}
+            </div>
 
-export default Clips
+            <div className="fixed bottom-0 bg-white w-full px-5 py-2 grid items-center">
+              <div className="flex items-center justify-between">
+                <h1 className="text-base font-semibold uppercase">SubTotal</h1>
+                <h1 className="text-sm rounded bg-theme-cart text-slate-100 px-1 py-0.5">${totalAmount}</h1>
+              </div>
+              <div className="grid items-center gap-2">
+                <p className="text-sm font-medium text-center">Taxes and Shipping Will Calculate At Shipping</p>
+                <button type="button" className="button-theme bg-theme-cart text-white">Check Out</button>
+              </div>
+            </div>
+
+          </div>}
+        </div>
+      </div>
+    </>
+  );
+};
+
+export default Cart;
